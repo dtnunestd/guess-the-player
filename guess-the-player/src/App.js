@@ -9,18 +9,37 @@ import DialogTitle from "@mui/material/DialogTitle";
 
 import TextField from "@mui/material/TextField";
 
-const players = ["Aimar", "Saviola", "Cardozo"];
+const players = [
+  "Moreira",
+  "Quim",
+  "Julio Cesar",
+  "Moretto",
+  "Aimar",
+  "Saviola",
+  "Cardozo",
+];
 let index = Math.floor(Math.random() * players.length);
 
 function App() {
   const [stopImage, setStopImage] = useState(false);
   const [openModal, setopenModal] = useState(false);
+  const [blurLevel, setBlurLevel] = useState(50);
 
-  const [value, setValue] = useState(" ");
-
-  let classes = stopImage || openModal ? `App-logo` : `App-logo animate-logo`;
+  const [value, setValue] = useState("Player");
 
   const [selectedPlayer, setSelectedPlayer] = useState(players[index]);
+
+  useEffect(() => {
+    const blurTimer = setInterval(() => {
+      if (blurLevel > 0) {
+        setBlurLevel((prevBlur) => prevBlur - 1);
+      }
+    }, 300);
+
+    return () => {
+      clearInterval(blurTimer);
+    };
+  }, [blurLevel]);
 
   const handleClose = () => {
     setopenModal(false);
@@ -32,17 +51,16 @@ function App() {
     }
 
     const newIndex = Math.floor(Math.random() * players.length);
-    console.log("newIndex", newIndex);
     setSelectedPlayer(players[newIndex]);
+    setValue("");
 
     index = newIndex;
+    setBlurLevel(50);
   };
 
   useEffect(() => {
-    console.log("value", value);
-    console.log("selectedPlayer", selectedPlayer);
-
     if (value === selectedPlayer) {
+      setBlurLevel(0);
       setopenModal(true);
     }
   }, [value]);
@@ -50,9 +68,14 @@ function App() {
   return (
     <Box className="App-header">
       {players.length > 0 ? (
-        <img src={`../${selectedPlayer}.jpeg`} className={classes} alt="logo" />
+        <img
+          src={`../${selectedPlayer}.jpeg`}
+          className="App-logo"
+          style={{ filter: `blur(${blurLevel}px)` }}
+          alt="logo"
+        />
       ) : (
-        <img src={`../campeao.jpeg`} className={classes} alt="logo" />
+        <img src={`../campeao.jpeg`} className="App-logo" alt="logo" />
       )}
       <Stack spacing={2}>
         <p>Guess the player</p>
@@ -65,17 +88,19 @@ function App() {
           {stopImage ? "Run image" : "Stop Image"}
         </Button>
         <Autocomplete
+          size="small"
           style={{ backgroundColor: "white" }}
+          value={value}
           onChange={(event, newValue) => {
             setValue(newValue);
           }}
           disablePortal
-          id="combo-box-demo"
+          id="size-small-outlined-multi"
           options={players}
           sx={{ width: 300 }}
-          renderInput={(params) => <TextField {...params} label="Player" />}
+          renderInput={(params) => <TextField {...params} />}
         />
-        <Dialog selectedValue={""} open={openModal} onClose={handleClose}>
+        <Dialog open={openModal} onClose={handleClose}>
           <DialogTitle>
             {players.length === 0
               ? "Ganhou o jogo parabens!"
