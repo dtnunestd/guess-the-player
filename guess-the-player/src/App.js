@@ -9,6 +9,11 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
 import TextField from "@mui/material/TextField";
+import Fab from "@mui/material/Fab";
+import PauseOutlinedIcon from "@mui/icons-material/PauseOutlined";
+import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
+
+import { useTheme } from "@mui/material/styles";
 
 const players = [
   "Moreira",
@@ -27,14 +32,22 @@ function App() {
   const [isDisabled, setIsDisabled] = useState(false);
   const [points, setPoints] = useState(1000);
   const [isOver, setIsOver] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const [value, setValue] = useState("Player");
 
   const [selectedPlayer, setSelectedPlayer] = useState(players[index]);
 
+  const theme = useTheme();
+
+  const transitionDuration = {
+    enter: theme.transitions.duration.enteringScreen,
+    exit: theme.transitions.duration.leavingScreen,
+  };
+
   useEffect(() => {
     const blurTimer = setInterval(() => {
-      if (blurLevel > 0 && !isOver) {
+      if (blurLevel > 0 && !isOver && !isPaused) {
         setBlurLevel((prevBlur) => prevBlur - 1);
         setPoints((prevPoints) => prevPoints - 1);
       }
@@ -43,7 +56,7 @@ function App() {
     return () => {
       clearInterval(blurTimer);
     };
-  }, [blurLevel, isOver]);
+  }, [blurLevel, isOver, isPaused]);
 
   const handleClose = () => {
     setOpenModal(false);
@@ -59,7 +72,6 @@ function App() {
 
       index = newIndex;
       setBlurLevel(50);
-      setPoints((prevPoints) => prevPoints + 50);
 
       setIsDisabled(false);
 
@@ -73,7 +85,7 @@ function App() {
     if (value === selectedPlayer) {
       setBlurLevel(0);
       setOpenModal(true);
-    } else if (value !== "Player") {
+    } else if (value !== "Player" && value != "") {
       setPoints((prevPoints) => prevPoints - 50);
     }
   }, [value]);
@@ -122,6 +134,7 @@ function App() {
           >
             Extra Help
           </Button>
+
           <Autocomplete
             size="small"
             style={{ backgroundColor: "white" }}
@@ -135,12 +148,31 @@ function App() {
             sx={{ width: 300 }}
             renderInput={(params) => <TextField {...params} />}
           />
+          <Fab
+            color="primary"
+            aria-label="add"
+            style={{
+              position: "fixed",
+              bottom: "20px",
+              right: "20px",
+              zIndex: "10000",
+            }}
+            onClick={() => {
+              setIsPaused(!isPaused);
+              setIsDisabled(true);
+            }}
+          >
+            {isPaused ? <PlayArrowOutlinedIcon /> : <PauseOutlinedIcon />}
+          </Fab>
           <Dialog open={openModal} onClose={handleClose}>
             <DialogTitle>
               {players.length === 0
                 ? `Ganhou o jogo parabens! Pontuação ${points}`
                 : `Acertou! O jogador era o ${selectedPlayer}`}
             </DialogTitle>
+          </Dialog>
+          <Dialog open={isPaused}>
+            <DialogTitle>Está em pausa!</DialogTitle>
           </Dialog>
         </Stack>
       </Box>
