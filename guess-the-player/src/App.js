@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import Autocomplete from "@mui/material/Autocomplete";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
+import Typography from "@mui/material/Typography";
 
 import TextField from "@mui/material/TextField";
 
@@ -21,9 +22,9 @@ const players = [
 let index = Math.floor(Math.random() * players.length);
 
 function App() {
-  const [stopImage, setStopImage] = useState(false);
   const [openModal, setopenModal] = useState(false);
   const [blurLevel, setBlurLevel] = useState(50);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const [value, setValue] = useState("Player");
 
@@ -56,6 +57,7 @@ function App() {
 
     index = newIndex;
     setBlurLevel(50);
+    setIsDisabled(false);
   };
 
   useEffect(() => {
@@ -78,14 +80,22 @@ function App() {
         <img src={`../campeao.jpeg`} className="App-logo" alt="logo" />
       )}
       <Stack spacing={2}>
-        <p>Guess the player</p>
+        <Typography
+          variant="h5"
+          gutterBottom
+          style={{ textAlign: "center", marginTop: "16px" }}
+        >
+          Guess the Player
+        </Typography>
         <Button
           variant="contained"
+          disabled={isDisabled}
           onClick={() => {
-            setStopImage(!stopImage);
+            setBlurLevel((prevBlur) => prevBlur - 25);
+            setIsDisabled(true);
           }}
         >
-          {stopImage ? "Run image" : "Stop Image"}
+          Extra Help
         </Button>
         <Autocomplete
           size="small"
