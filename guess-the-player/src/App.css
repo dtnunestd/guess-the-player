@@ -4,18 +4,17 @@
   width: 400px;
   height: 400px;
   object-fit: cover;
-  object-position: center;
+  object-position: top;
   border: 1px solid white;
 }
 
 .App-header {
+  padding-top: 80px;
   background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
   color: white;
 }
 

@@ -2,43 +2,38 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Autocomplete from "@mui/material/Autocomplete";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import Typography from "@mui/material/Typography";
-import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
-import VolumeUpOutlinedIcon from "@mui/icons-material/VolumeUpOutlined";
-import TextField from "@mui/material/TextField";
-import Fab from "@mui/material/Fab";
-import PauseOutlinedIcon from "@mui/icons-material/PauseOutlined";
-import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 
-const players = [
-  "Moreira",
-  "Quim",
-  "Julio Cesar",
-  "Moretto",
-  "Aimar",
-  "Saviola",
-  "Cardozo",
-];
+import Typography from "@mui/material/Typography";
+
+import TextField from "@mui/material/TextField";
+
+import Header from "./Header.js";
+import Menu from "./Menu.js";
+import Dialogs from "./Dialogs.js";
+import Images from "./Images.js";
+import Avatars from "./Avatars";
+
+import { players, listPlayers } from "./players";
+
 let index = Math.floor(Math.random() * players.length);
 
 function App() {
+  const blur = 50;
   const [openModal, setOpenModal] = useState(false);
-  const [blurLevel, setBlurLevel] = useState(50);
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [blurLevel, setBlurLevel] = useState(blur);
   const [points, setPoints] = useState(1000);
   const [isOver, setIsOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [changeSound, setChangeSound] = useState(false);
+  const [counter, setCounter] = useState(0);
+
+  const handlePause = () => {
+    setIsPaused(!isPaused);
+  };
 
   const [value, setValue] = useState("Player");
 
   const [selectedPlayer, setSelectedPlayer] = useState(players[index]);
-
-  const soundStyle = changeSound ? "visible" : "hidden";
 
   useEffect(() => {
     const blurTimer = setInterval(() => {
@@ -46,29 +41,28 @@ function App() {
         setBlurLevel((prevBlur) => prevBlur - 1);
         setPoints((prevPoints) => prevPoints - 1);
       }
-    }, 300);
+    }, 1000);
 
     return () => {
       clearInterval(blurTimer);
     };
   }, [blurLevel, isOver, isPaused]);
 
+  useEffect(() => {
+    console.log(counter);
+  }, [counter]);
+
   const handleClose = () => {
-    setOpenModal(false);
-
-    players.splice(index, 1);
-
-    if (players.length === 0) {
+    if (counter === 4) {
+      console.log("is over");
       setIsOver(true);
-      setOpenModal(true);
     } else {
+      setOpenModal(false);
       const newIndex = Math.floor(Math.random() * players.length);
       setValue("");
 
       index = newIndex;
-      setBlurLevel(50);
-
-      setIsDisabled(false);
+      setBlurLevel(blur);
 
       setTimeout(() => {
         setSelectedPlayer(players[newIndex]);
@@ -77,58 +71,33 @@ function App() {
   };
 
   useEffect(() => {
-    if (value === selectedPlayer) {
+    if (value === selectedPlayer.name) {
       setBlurLevel(0);
+      setCounter((prevCounter) => prevCounter + 1);
       setOpenModal(true);
     } else if (value !== "Player" && value !== "") {
-      setPoints((prevPoints) => prevPoints - 50);
+      setPoints((prevPoints) => prevPoints - 10);
     }
   }, [value, selectedPlayer]);
 
   return (
     <>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="center"
-        spacing={1}
-        sx={{ py: 2 }}
-      >
-        <EmojiEventsOutlinedIcon size="" />
-        <Typography variant="h5">Pontuação: {points}</Typography>
-      </Stack>
+      <Header points={points} />
+
       <Box className="App-header">
-        {players.length > 0 ? (
-          <img
-            src={`../${selectedPlayer}.jpeg`}
-            className="App-logo"
-            style={{ filter: `blur(${blurLevel}px)` }}
-            alt="logo"
-          />
-        ) : (
-          <img src={`../campeao.jpeg`} className="App-logo" alt="logo" />
-        )}
+        <Images
+          counter={counter}
+          blurLevel={blurLevel}
+          selectedPlayer={selectedPlayer.name}
+        />
         <Stack spacing={2}>
           <Typography
             variant="h5"
             gutterBottom
-            style={{ textAlign: "center", marginTop: "16px" }}
+            style={{ textAlign: "center", marginTop: "40px" }}
           >
-            Guess the Player
+            Adivinha o jogador
           </Typography>
-          <Button
-            variant="contained"
-            disabled={isDisabled}
-            onClick={() => {
-              blurLevel > 25
-                ? setBlurLevel((prevBlur) => prevBlur - 25)
-                : setBlurLevel(0);
-
-              setIsDisabled(true);
-            }}
-          >
-            Extra Help
-          </Button>
 
           <Autocomplete
             size="small"
@@ -139,64 +108,27 @@ function App() {
             }}
             disablePortal
             id="size-small-outlined-multi"
-            options={players}
+            options={listPlayers}
             sx={{ width: 300 }}
             renderInput={(params) => <TextField {...params} />}
+            ListboxProps={{
+              style: {
+                maxHeight: "250px",
+              },
+            }}
           />
-          <Fab
-            color="primary"
-            aria-label="add"
-            style={{
-              position: "fixed",
-              bottom: "20px",
-              right: "20px",
-              zIndex: "10000",
-            }}
-            onClick={() => {
-              setIsPaused(!isPaused);
-              setIsDisabled(true);
-            }}
-          >
-            {isPaused ? <PlayArrowOutlinedIcon /> : <PauseOutlinedIcon />}
-          </Fab>
-          <Fab
-            color="primary"
-            aria-label="add"
-            style={{
-              position: "fixed",
-              bottom: "90px",
-              right: "20px",
-              zIndex: "10000",
-            }}
-            onClick={() => {
-              setChangeSound(!changeSound);
-            }}
-          >
-            <VolumeUpOutlinedIcon />
-          </Fab>
-          <audio
-            controls
-            autoplay
-            style={{
-              position: "fixed",
-              bottom: "90px",
-              right: "90px",
-              zIndex: "10000",
-              visibility: soundStyle,
-            }}
-          >
-            <source src="music.mp3" type="audio/mpeg" />
-          </audio>
-          <Dialog open={openModal} onClose={handleClose}>
-            <DialogTitle>
-              {players.length === 0
-                ? `Parabéns! Pontuação: ${points}`
-                : `Acertou! O jogador era o ${selectedPlayer}`}
-            </DialogTitle>
-          </Dialog>
-          <Dialog open={isPaused}>
-            <DialogTitle>Está em pausa!</DialogTitle>
-          </Dialog>
+
+          <Menu isPaused={isPaused} handlePause={handlePause} />
+
+          <Dialogs
+            points={points}
+            selectedPlayer={selectedPlayer.name}
+            openModal={openModal}
+            counter={counter}
+            handleClose={handleClose}
+          />
+
+          <Avatars selectedPlayer={selectedPlayer} value={value} />
         </Stack>
       </Box>
     </>
