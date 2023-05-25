@@ -1,10 +1,11 @@
 .App-logo {
   height: 40vmin;
   pointer-events: none;
-  width: 200px;
+  width: 400px;
   height: 400px;
   object-fit: cover;
   object-position: center;
+  border: 1px solid white;
 }
 
 .App-header {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, wait } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
@@ -8,12 +8,11 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
+import VolumeUpOutlinedIcon from "@mui/icons-material/VolumeUpOutlined";
 import TextField from "@mui/material/TextField";
 import Fab from "@mui/material/Fab";
 import PauseOutlinedIcon from "@mui/icons-material/PauseOutlined";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
-
-import { useTheme } from "@mui/material/styles";
 
 const players = [
   "Moreira",
@@ -33,17 +32,13 @@ function App() {
   const [points, setPoints] = useState(1000);
   const [isOver, setIsOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [changeSound, setChangeSound] = useState(false);
 
   const [value, setValue] = useState("Player");
 
   const [selectedPlayer, setSelectedPlayer] = useState(players[index]);
 
-  const theme = useTheme();
-
-  const transitionDuration = {
-    enter: theme.transitions.duration.enteringScreen,
-    exit: theme.transitions.duration.leavingScreen,
-  };
+  const soundStyle = changeSound ? "visible" : "hidden";
 
   useEffect(() => {
     const blurTimer = setInterval(() => {
@@ -85,10 +80,10 @@ function App() {
     if (value === selectedPlayer) {
       setBlurLevel(0);
       setOpenModal(true);
-    } else if (value !== "Player" && value != "") {
+    } else if (value !== "Player" && value !== "") {
       setPoints((prevPoints) => prevPoints - 50);
     }
-  }, [value]);
+  }, [value, selectedPlayer]);
 
   return (
     <>
@@ -164,10 +159,38 @@ function App() {
           >
             {isPaused ? <PlayArrowOutlinedIcon /> : <PauseOutlinedIcon />}
           </Fab>
+          <Fab
+            color="primary"
+            aria-label="add"
+            style={{
+              position: "fixed",
+              bottom: "90px",
+              right: "20px",
+              zIndex: "10000",
+            }}
+            onClick={() => {
+              setChangeSound(!changeSound);
+            }}
+          >
+            <VolumeUpOutlinedIcon />
+          </Fab>
+          <audio
+            controls
+            autoplay
+            style={{
+              position: "fixed",
+              bottom: "90px",
+              right: "90px",
+              zIndex: "10000",
+              visibility: soundStyle,
+            }}
+          >
+            <source src="music.mp3" type="audio/mpeg" />
+          </audio>
           <Dialog open={openModal} onClose={handleClose}>
             <DialogTitle>
               {players.length === 0
-                ? `Ganhou o jogo parabens! Pontuação ${points}`
+                ? `Parabéns! Pontuação: ${points}`
                 : `Acertou! O jogador era o ${selectedPlayer}`}
             </DialogTitle>
           </Dialog>
