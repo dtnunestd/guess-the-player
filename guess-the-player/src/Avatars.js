@@ -37,7 +37,7 @@ const Avatars = ({ selectedPlayer, value }) => {
       );
       setAgeColor(age === foundPlayer.age ? green : deepOrange);
     }
-  }, [foundPlayer]);
+  }, [foundPlayer, age, nacionality, position]);
 
   return (
     <>

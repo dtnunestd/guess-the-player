@@ -28,6 +28,7 @@ function App() {
   const [counter, setCounter] = useState(0);
 
   const handlePause = () => {
+    console.log("enntrei");
     setIsPaused(!isPaused);
   };
 
