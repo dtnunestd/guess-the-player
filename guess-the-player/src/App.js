@@ -1,138 +1,271 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import Stack from "@mui/material/Stack";
-import Box from "@mui/material/Box";
-import Autocomplete from "@mui/material/Autocomplete";
 
-import Typography from "@mui/material/Typography";
-
-import TextField from "@mui/material/TextField";
-
-import Header from "./Header.js";
-import Menu from "./Menu.js";
-import Dialogs from "./Dialogs.js";
-import Images from "./Images.js";
-import Avatars from "./Avatars";
-
-import { players, listPlayers } from "./players";
-
-let index = Math.floor(Math.random() * players.length);
+const playerData = [
+  {
+    name: "Bah",
+    nationality: "Argentina",
+    position: "Defender",
+    age: 34,
+  },
+  {
+    name: "Antonio",
+    nationality: "Argentina",
+    position: "Defender",
+    age: 33,
+  },
+  { name: "Andre", nationality: "Argentina", position: "Midfielder", age: 27 },
+  // ... Add other player data
+];
 
 function App() {
-  const blur = 50;
-  const [openModal, setOpenModal] = useState(false);
-  const [blurLevel, setBlurLevel] = useState(blur);
-  const [points, setPoints] = useState(1000);
-  const [isOver, setIsOver] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [counter, setCounter] = useState(0);
+  const [points, setPoints] = useState(100);
+  const [blurAmount, setBlurAmount] = useState(20);
+  const [selectedPlayer, setSelectedPlayer] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  const handlePause = () => {
-    console.log("enntrei");
-    setIsPaused(!isPaused);
+  const [displayedCircles, setDisplayedCircles] = useState([]);
+  const [playerInputValue, setPlayerInputValue] = useState("");
+  const [playerSuggestions, setPlayerSuggestions] = useState(
+    playerData.map((player) => player.name)
+  );
+
+  const currentImage = `url(images/${currentImageIndex}.jpg)`; // Replace with player image URLs
+
+  useEffect(() => {
+    if (points <= 0) {
+      alert("Game Over! Your final score: " + points);
+      // Reset the game or navigate to a different screen here
+    }
+  }, [points]);
+
+  useEffect(() => {
+    if (blurAmount > 0 && !showSuccessMessage) {
+      const timer = setInterval(() => {
+        setBlurAmount(blurAmount - 1);
+        setPoints(points - 1); // Decrease points every second
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [blurAmount, points, showSuccessMessage]);
+
+  const getPlayerInfoFromName = (name) => {
+    const playerInfo = playerData.find((player) => player.name === name);
+    return playerInfo || { nationality: "", position: "", age: 0 };
   };
 
-  const [value, setValue] = useState("Player");
+  const handleGuess = () => {
+    const playerInfo = getPlayerInfoFromName(selectedPlayer);
+    const currentPlayerInfo = playerData[currentImageIndex];
 
-  const [selectedPlayer, setSelectedPlayer] = useState(players[index]);
+    const newAttempt = [
+      {
+        nationality: playerInfo.nationality === currentPlayerInfo.nationality,
+        position: playerInfo.position === currentPlayerInfo.position,
+        age: playerInfo.age > currentPlayerInfo.age,
+      },
+    ];
 
-  useEffect(() => {
-    const blurTimer = setInterval(() => {
-      if (blurLevel > 0 && !isOver && !isPaused) {
-        setBlurLevel((prevBlur) => prevBlur - 1);
-        setPoints((prevPoints) => prevPoints - 1);
-      }
-    }, 1000);
+    setAttempts(attempts + 1);
+    setDisplayedCircles([...displayedCircles, ...newAttempt]);
 
-    return () => {
-      clearInterval(blurTimer);
-    };
-  }, [blurLevel, isOver, isPaused]);
-
-  useEffect(() => {
-    console.log(counter);
-  }, [counter]);
-
-  const handleClose = () => {
-    if (counter === 4) {
-      console.log("is over");
-      setIsOver(true);
+    if (selectedPlayer === currentPlayerInfo.name) {
+      setBlurAmount(20);
+      setSelectedPlayer("");
+      setDisplayedCircles([]);
+      setShowSuccessMessage(true);
     } else {
-      setOpenModal(false);
-      const newIndex = Math.floor(Math.random() * players.length);
-      setValue("");
-
-      index = newIndex;
-      setBlurLevel(blur);
-
-      setTimeout(() => {
-        setSelectedPlayer(players[newIndex]);
-      }, 100);
+      setPoints(points - 30);
+      setSelectedPlayer("");
     }
   };
 
-  useEffect(() => {
-    if (value === selectedPlayer.name) {
-      setBlurLevel(0);
-      setCounter((prevCounter) => prevCounter + 1);
-      setOpenModal(true);
-    } else if (value !== "Player" && value !== "") {
-      setPoints((prevPoints) => prevPoints - 10);
-    }
-  }, [value, selectedPlayer]);
+  const handleContinue = () => {
+    setCurrentImageIndex(currentImageIndex + 1);
+    setBlurAmount(20);
+    setSelectedPlayer("");
+    setDisplayedCircles([]);
+    setShowSuccessMessage(false);
+  };
+
+  const handlePlayerInputChange = (event) => {
+    const inputValue = event.target.value;
+    setPlayerInputValue(inputValue);
+
+    // Update suggestions based on input value
+    const filteredSuggestions = playerData
+      .map((player) => player.name)
+      .filter((name) =>
+        name.toLowerCase().startsWith(inputValue.toLowerCase())
+      ); // Check for startsWith
+    setPlayerSuggestions(filteredSuggestions);
+  };
+
+  const handlePlayerInputSelect = (value) => {
+    setPlayerInputValue(value);
+    setSelectedPlayer(value);
+    setPlayerSuggestions([]);
+  };
 
   return (
-    <>
-      <Header points={points} />
+    <div className="App">
+      <h1>Guess the Blurred Player</h1>
+      {showSuccessMessage ? (
+        <div className="success-message">
+          <p>Acertaste! Parabéns!</p>
 
-      <Box className="App-header">
-        <Images
-          counter={counter}
-          blurLevel={blurLevel}
-          selectedPlayer={selectedPlayer.name}
-        />
-        <Stack spacing={2}>
-          <Typography
-            variant="h5"
-            gutterBottom
-            style={{ textAlign: "center", marginTop: "40px" }}
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            Adivinha o jogador
-          </Typography>
+            <div
+              className="image-container"
+              style={{
+                backgroundImage: currentImage,
+              }}
+            />
+          </div>
 
-          <Autocomplete
-            size="small"
-            style={{ backgroundColor: "white" }}
-            value={value}
-            onChange={(event, newValue) => {
-              setValue(newValue);
-            }}
-            disablePortal
-            id="size-small-outlined-multi"
-            options={listPlayers}
-            sx={{ width: 300 }}
-            renderInput={(params) => <TextField {...params} />}
-            ListboxProps={{
-              style: {
-                maxHeight: "250px",
-              },
-            }}
-          />
+          <div className="attempt" style={{ width: "100%", display: "flex" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div className={"circle green"} />
+              <div className={"circle-label"}>Nationality</div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div className={`circle green`} />
+              <div className={"circle-label"}>Position</div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div
+                className={`circle green`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
+              ></div>
+              <div className={"circle-label"}>Age</div>
+            </div>
+          </div>
+          <button onClick={handleContinue}>Continue</button>
+        </div>
+      ) : (
+        <div className="game-container">
+          <div>
+            <div
+              className="image-container"
+              style={{
+                backgroundImage: currentImage,
+                filter: `blur(${blurAmount}px)`,
+              }}
+            ></div>
+            <p>Points: {points}</p>
+          </div>
 
-          <Menu isPaused={isPaused} handlePause={handlePause} />
-
-          <Dialogs
-            points={points}
-            selectedPlayer={selectedPlayer.name}
-            openModal={openModal}
-            counter={counter}
-            handleClose={handleClose}
-          />
-
-          <Avatars selectedPlayer={selectedPlayer} value={value} />
-        </Stack>
-      </Box>
-    </>
+          <div className="guess-container">
+            <div
+              className={`select-container ${
+                playerInputValue ? "show-suggestions" : ""
+              }`}
+            >
+              <input
+                type="text"
+                value={playerInputValue}
+                onChange={handlePlayerInputChange}
+                placeholder="Enter player's name"
+              />
+              <div className={`suggestions ${playerInputValue ? "show" : ""}`}>
+                {playerSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="suggestion"
+                    onClick={() => handlePlayerInputSelect(suggestion)}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button onClick={handleGuess}>Submit</button>
+          </div>
+        </div>
+      )}
+      {attempts > 0 && (
+        <div className="attempts">
+          {displayedCircles.map((attempt, index) => (
+            <div key={index} className="attempt">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div className={"circle green"} />
+                <div className={"circle-label"}>Nationality</div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  className={`circle ${attempt.position ? "green" : "red"}`}
+                />
+                <div className={"circle-label"}>Position</div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  className={`circle ${attempt.age ? "green" : "red"}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                  }}
+                >
+                  {attempt.age ? "↑" : "↓"}
+                </div>
+                <div className={"circle-label"}>Age</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
