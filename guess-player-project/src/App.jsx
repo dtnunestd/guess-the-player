@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
+import Menu from "./Menu";
+import SuccesMessage from "./SuccessMessage";
 import "./App.css";
 import playerData from "./playerData.js";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 
 function App() {
   const [points, setPoints] = useState(100);
+  const [gameOver, setGameOver] = useState(false);
   const [blurAmount, setBlurAmount] = useState(35);
   const [selectedPlayer, setSelectedPlayer] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(
@@ -11,12 +16,16 @@ function App() {
   );
   const [attempts, setAttempts] = useState(0);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [result, setResult] = useState(0);
 
   const [displayedCircles, setDisplayedCircles] = useState([]);
-  const [playerInputValue, setPlayerInputValue] = useState("");
   const [playerSuggestions, setPlayerSuggestions] = useState(
     playerData.map((player) => player.name)
   );
+
+  useEffect(() => {
+    console.log("selectedplayer", selectedPlayer === "");
+  }, [selectedPlayer]);
 
   const currentImage = new URL(
     `./assets/images/${currentImageIndex}.jpg`,
@@ -25,17 +34,16 @@ function App() {
 
   useEffect(() => {
     if (points <= 0) {
-      alert("Game Over! Your final score: " + points);
-      // Reset the game or navigate to a different screen here
+      setGameOver(true);
     }
   }, [points]);
 
   useEffect(() => {
     if (blurAmount > 0 && !showSuccessMessage) {
       const timer = setInterval(() => {
-        setBlurAmount(blurAmount - 1);
+        setBlurAmount(blurAmount - 2);
         setPoints(points - 1); // Decrease points every second
-      }, 1000);
+      }, 500);
       return () => clearInterval(timer);
     }
   }, [blurAmount, points, showSuccessMessage]);
@@ -45,7 +53,8 @@ function App() {
     return playerInfo || { nationality: "", position: "", age: 0 };
   };
 
-  const handleGuess = () => {
+  const handleGuess = (e) => {
+    e.preventDefault();
     const playerInfo = getPlayerInfoFromName(selectedPlayer);
     const currentPlayerInfo = playerData[currentImageIndex];
 
@@ -92,9 +101,10 @@ function App() {
     console.log("attempt", newAttempt);
 
     setAttempts(attempts + 1);
-    setDisplayedCircles([...displayedCircles, ...newAttempt]);
+    setDisplayedCircles([...newAttempt, ...displayedCircles]);
 
     if (selectedPlayer === currentPlayerInfo.name) {
+      setResult(result + 1);
       setBlurAmount(20);
       setSelectedPlayer("");
       setDisplayedCircles([]);
@@ -113,88 +123,33 @@ function App() {
     setShowSuccessMessage(false);
   };
 
-  const handlePlayerInputChange = (event) => {
-    const inputValue = event.target.value;
-    setPlayerInputValue(inputValue);
-
-    // Update suggestions based on input value
-    const filteredSuggestions = playerData
-      .map((player) => player.name)
-      .filter((name) => doesNameContainInput(name, inputValue));
-    setPlayerSuggestions(filteredSuggestions);
-  };
-
-  // Helper function to determine if any word in the name contains the input
-  const doesNameContainInput = (name, input) => {
-    const words = name.toLowerCase().split(" ");
-    return words.some((word) => word.startsWith(input.toLowerCase()));
-  };
-
-  const handlePlayerInputSelect = (value) => {
-    setPlayerInputValue(value);
-    setSelectedPlayer(value);
-    setPlayerSuggestions([]);
-  };
+  if (gameOver) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <h1>Fim do jogo!</h1>
+        <h2>Pontuação: {result}</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
-      <h1>Guess the Blurred Player</h1>
+      <h1>Adivinha o jogador</h1>
       {showSuccessMessage ? (
-        <div className="success-message">
-          <p>Acertaste! Parabéns!</p>
-
-          <div
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img className="image-container" src={currentImage} />
-          </div>
-
-          <div className="attempt" style={{ width: "100%", display: "flex" }}>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div className={"circle green"} />
-              <div className={"circle-label"}>Nationality</div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div className={`circle green`} />
-              <div className={"circle-label"}>Position</div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div
-                className={`circle green`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              ></div>
-              <div className={"circle-label"}>Age</div>
-            </div>
-          </div>
-          <button onClick={handleContinue}>Continue</button>
-        </div>
+        <SuccesMessage
+          result={result}
+          currentImage={currentImage}
+          handleContinue={handleContinue}
+        />
       ) : (
         <div className="game-container">
           <div>
@@ -207,32 +162,40 @@ function App() {
               }}
             />
 
-            <p>Points: {points}</p>
+            <div className="info">
+              <p>Pontos: {points}</p>
 
-            <div
-              className={`select-container ${
-                playerInputValue ? "show-suggestions" : ""
-              }`}
-            >
-              <input
-                type="text"
-                value={playerInputValue}
-                onChange={handlePlayerInputChange}
-                placeholder="Enter player's name"
-              />
-              <div className={`suggestions ${playerInputValue ? "show" : ""}`}>
-                {playerSuggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="suggestion"
-                    onClick={() => handlePlayerInputSelect(suggestion)}
-                  >
-                    {suggestion}
-                  </div>
-                ))}
-              </div>
+              <form onSubmit={handleGuess}>
+                <Autocomplete
+                  className="input"
+                  disablePortal
+                  options={playerSuggestions}
+                  onChange={(e, value) => setSelectedPlayer(value)}
+                  value={selectedPlayer}
+                  renderInput={(params) => (
+                    <TextField {...params} autoFocus label="Jogador" />
+                  )}
+                  componentsProps={{
+                    popper: {
+                      modifiers: [
+                        {
+                          name: "flip",
+                          enabled: false,
+                        },
+                      ],
+                    },
+                  }}
+                />
+
+                <button
+                  className="button"
+                  type="submit"
+                  disabled={selectedPlayer === ""}
+                >
+                  Confirmar
+                </button>
+              </form>
             </div>
-            <button onClick={handleGuess}>Submit</button>
           </div>
 
           {attempts > 0 && (
@@ -310,6 +273,7 @@ function App() {
           )}
         </div>
       )}
+      {/* <Menu /> */}
     </div>
   );
 }
